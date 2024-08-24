@@ -1,6 +1,4 @@
 /*****************************************************************
-Nome: Anderson Murillo          RA: 248221         Turma: A
-Nome:                           RA:
 Nome: Anderson Murillo                  RA: 248221
 Nome: Isaac do Nascimento Oliveira      RA: 247175
 *******************************************************************/
@@ -34,9 +32,4 @@ void main(int argc, char *argv[]) {
             wait(&status);
         }
     }
-}
-
-
-int main(int argc, char *argv[]) {
-   
 }
