@@ -3,63 +3,68 @@ Nome: Anderson Murillo                  RA: 248221
 Nome: Isaac do Nascimento Oliveira      RA: 247175
 *******************************************************************/
 
-#include "stdio.h"
-#include "string.h"
-#include "unistd.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
-#define MAX_LINE_LEN 1024 // max shell line len
-#define MAX_CMD_LEN 256 // max cmd or args len
-#define MAX_ARGS_LEN 256 // max cmd or args len
+#define MAX_LINE_LEN 1024
+#define MAX_CMD_LEN 256
+#define MAX_ARGS_LEN 256
 
 void read_command(char *cmd, char *args[]) {
-    char line[MAX_LINE_LEN];
+    char cmd_line[MAX_LINE_LEN];
 
-    // get input
+    // get user command
     printf("simple_shell$: ");
-    fgets(line, sizeof(line), stdin);
+    fgets(cmd_line, sizeof(cmd_line), stdin);
 
-    // extract words in line
-    char *token = strtok(line, " ");
-    strcpy(cmd, token);
+    // remove \n in the end of the user input
+    size_t len = strlen(cmd_line);
+    if (len > 0 && cmd_line[len - 1] == '\n')
+        cmd_line[len - 1] = '\0';
 
+    // split command line by " "
+    char *token = strtok(cmd_line, " ");
     int argcount = 0;
-    while (token != NULL) {
-        args[argcount++] = strtok(line, " ");
-        token = args[argcount-1];
+
+    while (token != NULL && argcount < MAX_ARGS_LEN - 1) {
+        args[argcount++] = token;
+        token = strtok(NULL, " ");
     }
+    args[argcount] = NULL; // terminate args list with NULL
 
-}
+    // copy command
+    strcpy(cmd, args[0]);
 
-
-void verify_command(char *cmd, char *dir) {
-    
 }
 
 int main(int argc, char *argv[]) {
     char cmd[MAX_CMD_LEN];
     char *args[MAX_ARGS_LEN];
+    char full_cmd_path[MAX_CMD_LEN + MAX_LINE_LEN];
 
     while (1) {
         int status;
-        __pid_t pid;
+        pid_t pid;
 
-        // read and check input
-        read_command(cmd, args); /* reads cmd and args
-         from command line */
-        verify_command(cmd, argv[1]);
-        if (!verify_command) {
-            printf("ERROR: Invalid command.");
-            continue;
-        }
-        
-        // valid command
+        // read user command
+        read_command(cmd, args);
+
+        // build the complete command filepath
+        strcpy(full_cmd_path, argv[1]);
+        strcat(full_cmd_path, "/");
+        strcat(full_cmd_path, cmd);
+
+        // create child process to execute the command
         pid = fork();
         if (pid == 0) {
-            execv(cmd, args);
+            execv(full_cmd_path, args);
             exit(1);
-        }
-        else {
-            wait(&status);
-        }
+        } else
+            wait(&status); // wait for the child process to finish
     }
+
+    return 0;
 }
