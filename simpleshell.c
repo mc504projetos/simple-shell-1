@@ -1,7 +1,7 @@
 /*****************************************************************
 Nome: Anderson Murillo                  RA: 248221
 Nome: Isaac do Nascimento Oliveira      RA: 247175
-*******************************************************************/
+*****************************************************************/
 
 #include <stdio.h>
 #include <unistd.h>
@@ -43,28 +43,19 @@ void read_command(char *cmd, char *args[]) {
 int main(int argc, char *argv[]) {
     char cmd[MAX_CMD_LEN];
     char *args[MAX_ARGS_LEN];
-    char full_cmd_path[MAX_CMD_LEN + MAX_LINE_LEN];
+	char full_cmd_path[MAX_CMD_LEN + MAX_LINE_LEN];
 
-    while (1) {
-        int status;
-        pid_t pid;
+	// read user command
+	read_command(cmd, args);
 
-        // read user command
-        read_command(cmd, args);
+	// build the complete command filepath
+	strcpy(full_cmd_path, argv[1]);
+	strcat(full_cmd_path, "/");
+	strcat(full_cmd_path, cmd);
 
-        // build the complete command filepath
-        strcpy(full_cmd_path, argv[1]);
-        strcat(full_cmd_path, "/");
-        strcat(full_cmd_path, cmd);
-
-        // create child process to execute the command
-        pid = fork();
-        if (pid == 0) {
-            execv(full_cmd_path, args);
-            exit(1);
-        } else
-            wait(&status); // wait for the child process to finish
-    }
+	// execute command
+	execv(full_cmd_path, args);
 
     return 0;
+            
 }
