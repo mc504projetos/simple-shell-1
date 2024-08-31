@@ -1,82 +1,61 @@
 /*****************************************************************
 Nome: Anderson Murillo                  RA: 248221
 Nome: Isaac do Nascimento Oliveira      RA: 247175
-*******************************************************************/
+*****************************************************************/
 
-#include "stdio.h"
-#include "string.h"
-#include "unistd.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
-#define MAX_LINE_LEN 1024 // max shell line len
-#define MAX_CMD_LEN 256 // max cmd or args len
-#define MAX_ARGS_LEN 256 // max cmd or args len
-
+#define MAX_LINE_LEN 1024
+#define MAX_CMD_LEN 256
+#define MAX_ARGS_LEN 256
 
 void read_command(char *cmd, char *args[]) {
-    char line[MAX_LINE_LEN];
+    char cmd_line[MAX_LINE_LEN];
 
-    // get input
+    // get user command
     printf("simple_shell$: ");
-    fgets(line, sizeof(line), stdin);
+    fgets(cmd_line, sizeof(cmd_line), stdin);
 
-    // extract words in line
-    char *token = strtok(line, " ");
-    strcpy(cmd, token);
+    // remove \n in the end of the user input
+    size_t len = strlen(cmd_line);
+    if (len > 0 && cmd_line[len - 1] == '\n')
+        cmd_line[len - 1] = '\0';
 
+    // split command line by " "
+    char *token = strtok(cmd_line, " ");
     int argcount = 0;
-    while (token != NULL) {
-        args[argcount++] = strtok(line, " ");
-        token = args[argcount-1];
+
+    while (token != NULL && argcount < MAX_ARGS_LEN - 1) {
+        args[argcount++] = token;
+        token = strtok(NULL, " ");
     }
+    args[argcount] = NULL; // terminate args list with NULL
+
+    // copy command
+    strcpy(cmd, args[0]);
+
 }
 
-// returns the cmd concatenated with the dir
-char *concatenate_cmd_with_dir(char *cmd, char *dir) {
-    // '/usr/bin/ -> example of dir
-    // 'whoiam' -> example of cmd
-    // in the end, i have to verify if this kind of thing occurs:
-    // '/usr/bin/whoiam'
-    char *dir_with_bar, result;
-    strcpy(dir_with_bar, strcat(dir, '/'));
-    strcpy(result, strcat(dir_with_bar, cmd));
-    return result;
-}
-
-int main() {
-    // argv is the first user input
-    // cmd is the command
-    // args is what cmd have to do
+int main(int argc, char *argv[]) {
     char cmd[MAX_CMD_LEN];
     char *args[MAX_ARGS_LEN];
-    char argv[MAX_LINE_LEN];
+	char full_cmd_path[MAX_CMD_LEN + MAX_LINE_LEN];
 
-    // the argv[1] is not the whole dir, we have to separate
-    // the strings after the blank space to get the dir and work
-    // with it
-    fgets(argv, sizeof(argv), stdin);
+	// read user command
+	read_command(cmd, args);
 
-    while (1) {
-        int status;
-        __pid_t pid;
+	// build the complete command filepath
+	strcpy(full_cmd_path, argv[1]);
+	strcat(full_cmd_path, "/");
+	strcat(full_cmd_path, cmd);
 
-        // read and check input
-        read_command(cmd, args); /* reads cmd and args
-         from command line */
-        char *result = concatenate_cmd_with_dir(cmd, argv[1]);
-        
-        // valid command
-        pid = fork();
-        if (pid == 0) {
-            int sucess = execv(result, args);
-            if (sucess == -1) {
-                printf("ERROR: Invalid command.");
-                continue;
-            } else {
-                exit(1);
-            } 
-        }
-        else {
-            wait(&status);
-        }
-    }
+	// execute command
+	execv(full_cmd_path, args);
+
+    return 0;
+            
 }
